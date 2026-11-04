@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CMSV6 | Camera Command Center</title>
+    <script>
+        (() => {
+            const original = MediaSource.prototype.addSourceBuffer;
+            let audioBuffer = null;
+            let videoBuffer = null;
+            let corrected = false;
+
+            MediaSource.prototype.addSourceBuffer = function (mime) {
+                const sb = original.call(this, mime);
+
+                if (mime.startsWith("audio/")) {
+                    audioBuffer = sb;
+                }
+
+                if (mime.startsWith("video/")) {
+                    videoBuffer = sb;
+                }
+
+                function synchronize() {
+                    if (corrected || !audioBuffer || !videoBuffer) return;
+                    if (audioBuffer.updating || videoBuffer.updating) return;
+
+                    try {
+                        if (!audioBuffer.buffered.length ||
+                            !videoBuffer.buffered.length) return;
+
+                        const audioStart = audioBuffer.buffered.start(0);
+                        const videoStart = videoBuffer.buffered.start(0);
+
+                        const difference = audioStart - videoStart;
+
+                        if (Math.abs(difference) > 5) {
+                            audioBuffer.timestampOffset = -difference;
+                            corrected = true;
+
+                            console.log(
+                                "[CMS FIX] Audio timestamp offset:",
+                                -difference
+                            );
+                        }
+                    } catch (error) {
+                        console.warn("[CMS FIX]", error.message);
+                    }
+                }
+
+                sb.addEventListener("updateend", synchronize);
+
+                return sb;
+            };
+        })();
+    </script>
+    <style>
+        :root {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+            color: #eaf0ff;
+            background: #080e1a
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(ellipse at 75% -20%, #18325c 0%, transparent 55%), #080e1a
+        }
+
+        button,
+        input,
+        select {
+            font: inherit
+        }
+
+        button {
+            cursor: pointer
+        }
+
+        button:disabled {
+            opacity: .45;
+            cursor: not-allowed
+        }
+
+        .shell {
+            max-width: 1600px;
+            margin: auto;
+            padding: 26px
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 26px
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px
+        }
+
+        .logo {
+            width: 45px;
+            height: 45px;
+            display: grid;
+            place-items: center;
+            background: #2563eb;
+            border-radius: 13px;
+            font-size: 24px;
+            box-shadow: 0 6px 24px #2563eb55
+        }
+
+        .brand strong {
+            display: block;
+            font-size: 20px;
+            letter-spacing: -.5px
+        }
+
+        .muted {
+            color: #91a0b8;
+            font-size: 13px
+        }
+
+        .tag {
+            padding: 8px 12px;
+            border: 1px solid #2a3b56;
+            border-radius: 999px;
+            color: #a8bbd6;
+            font-size: 12px
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 320px minmax(0, 1fr);
+            gap: 22px
+        }
+
+        .panel {
+            border: 1px solid #25344d;
+            border-radius: 18px;
+            background: #111c2f;
+            padding: 22px;
+            box-shadow: 0 14px 50px #0002
+        }
+
+        .panel h2 {
+            font-size: 17px;
+            margin: 0 0 7px
+        }
+
+        .panel p {
+            margin: 0 0 22px;
+            color: #94a5c0;
+            font-size: 13px;
+            line-height: 1.55
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 650;
+            color: #bdcbe0;
+            margin: 15px 0 7px
+        }
+
+        input,
+        select {
+            width: 100%;
+            background: #0b1424;
+            border: 1px solid #30405b;
+            border-radius: 10px;
+            padding: 12px;
+            color: #e9f1ff;
+            outline: none
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #4d8fff;
+            box-shadow: 0 0 0 3px #2563eb26
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            padding: 12px 16px;
+            font-weight: 700
+        }
+
+        .btn.secondary {
+            background: #22334e
+        }
+
+        .btn.full {
+            width: 100%;
+            margin-top: 19px
+        }
+
+        .btn.small {
+            padding: 9px 13px;
+            font-size: 12px
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .spread {
+            justify-content: space-between
+        }
+
+        .status {
+            font-size: 12px;
+            color: #93a7c5;
+            margin-top: 13px;
+            min-height: 20px;
+            overflow-wrap: anywhere
+        }
+
+        .status.error {
+            color: #ff8e99
+        }
+
+        .status.success {
+            color: #61dfad
+        }
+
+        .divider {
+            height: 1px;
+            background: #283852;
+            margin: 24px 0
+        }
+
+        .stat {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 18px 0
+        }
+
+        .stat>div {
+            padding: 13px 10px;
+            border: 1px solid #2c3b56;
+            border-radius: 12px;
+            background: #0b1628;
+            text-align: center
+        }
+
+        .stat b {
+            display: block;
+            font-size: 23px
+        }
+
+        .stat span {
+            font-size: 11px;
+            color: #92a3bd
+        }
+
+        .head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px
+        }
+
+        .head h1 {
+            font-size: 25px;
+            letter-spacing: -.7px;
+            margin: 0 0 5px
+        }
+
+        .head p {
+            margin: 0;
+            color: #94a5c0;
+            font-size: 13px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px
+        }
+
+        .grid.cols1 {
+            grid-template-columns: 1fr
+        }
+
+        .grid.cols3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr))
+        }
+
+        .grid.cols4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr))
+        }
+
+        .camera {
+            background: #0c1525;
+            border: 1px solid #283953;
+            border-radius: 14px;
+            overflow: hidden;
+            min-width: 0
+        }
+
+        .camera-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 13px;
+            gap: 8px
+        }
+
+        .camera-head strong {
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .live {
+            font-size: 10px;
+            color: #65e2b2;
+            white-space: nowrap
+        }
+
+        .live:before {
+            content: '● ';
+            color: #34d399
+        }
+
+        .screen {
+            width: 100%;
+            aspect-ratio:initial;
+            background: #030812;
+            position: relative;
+            /* overflow: hidden */
+            
+        }
+
+        .player-target {
+            width: 100%;
+            height: 100%;
+            min-height: 0
+        }
+
+        .empty-screen {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            color: #5f7798;
+            font-size: 12px;
+            pointer-events: none
+        }
+
+        .camera-foot {
+            padding: 9px 13px;
+            font-size: 11px;
+            color: #8da2c1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .hint {
+            margin-top: 20px;
+            padding: 14px;
+            border: 1px solid #29415e;
+            background: #11243b;
+            border-radius: 12px;
+            color: #adc0da;
+            font-size: 12px;
+            line-height: 1.7
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        .vehicle-list {
+            max-height: 230px;
+            overflow: auto;
+            display: grid;
+            gap: 7px
+        }
+
+        .vehicle {
+            padding: 10px 12px;
+            border: 1px solid #293a55;
+            border-radius: 10px;
+            background: #0b1628;
+            color: #d9e5f8;
+            text-align: left
+        }
+
+        .vehicle.active {
+            border-color: #3b82f6;
+            background: #172c4e
+        }
+
+        .vehicle small {
+            display: block;
+            color: #90a4c1;
+            margin-top: 3px
+        }
+
+        @media(max-width:1050px) {
+            .layout {
+                grid-template-columns: 1fr
+            }
+
+            .grid.cols4,
+            .grid.cols3 {
+                grid-template-columns: repeat(2, minmax(0, 1fr))
+            }
+        }
+
+        @media(max-width:600px) {
+            .shell {
+                padding: 15px
+            }
+
+            .grid,
+            .grid.cols3,
+            .grid.cols4 {
+                grid-template-columns: 1fr
+            }
+
+            .head h1 {
+                font-size: 20px
+            }
+
+            .panel {
+                padding: 17px
+            }
+        }
+
+
+        /* Professional CCTV monitoring panel */
+
+        .monitor-panel {
+            background: #0b1220;
+            border: 1px solid #26364d;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 16px 50px rgba(0, 0, 0, .25);
+            min-width: 0;
+        }
+
+        .monitor-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 18px 22px;
+            background: #121e30;
+            border-bottom: 1px solid #26364d;
+        }
+
+        .monitor-title {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .monitor-icon {
+            display: grid;
+            place-items: center;
+            width: 43px;
+            height: 43px;
+            border-radius: 12px;
+            background: #1c365c;
+            color: #75aaff;
+            font-size: 24px;
+        }
+
+        .monitor-title h2 {
+            margin: 0 0 5px;
+            font-size: 17px;
+            color: #f0f5ff;
+        }
+
+        .monitor-title p {
+            margin: 0;
+            color: #91a4bf;
+            font-size: 12px;
+        }
+
+        .monitor-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .monitor-indicator {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #71e6b5;
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #34d399;
+            box-shadow: 0 0 12px #34d39990;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: .35;
+            }
+        }
+
+        .monitor-btn {
+            padding: 10px 14px;
+            background: #20334e;
+            border: 1px solid #35506e;
+            border-radius: 9px;
+            color: #dbe8fc;
+            font-size: 12px;
+        }
+
+        .monitor-btn:hover {
+            background: #2b466a;
+        }
+
+        .monitor-content {
+            padding: 14px;
+            background: #080f1b;
+            min-height: 340px;
+        }
+
+        .monitor-content .grid {
+            display: grid;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .monitor-content .grid.cols1 {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .monitor-content .grid.cols2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .monitor-content .grid.cols3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .monitor-content .grid.cols4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .camera {
+            min-width: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #101b2c;
+            border: 1px solid #2b3b52;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .camera:hover {
+            border-color: #508bdf;
+            box-shadow: 0 0 0 1px #508bdf30;
+        }
+
+        .camera-head {
+            min-height: 42px;
+            padding: 11px 13px;
+            background: #152238;
+            border-bottom: 1px solid #283950;
+        }
+
+        .camera-head strong {
+            font-size: 12px;
+            color: #eaf2ff;
+        }
+
+        .screen {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            background: #02050b;
+            overflow: hidden;
+        }
+
+        .player-target {
+            width: 50%;
+            height: 100%;
+        }
+
+        .camera-foot {
+            padding: 10px 13px;
+            background: #101b2c;
+            border-top: 1px solid #25364c;
+            color: #93a8c4;
+            font-size: 11px;
+        }
+
+        .monitor-empty {
+            grid-column: 1 / -1;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 35px;
+            color: #90a4c0;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            color: #4c709e;
+            margin-bottom: 15px;
+        }
+
+        .monitor-empty h3 {
+            color: #e4edfc;
+            margin: 0 0 8px;
+        }
+
+        .monitor-empty p {
+            max-width: 340px;
+            line-height: 1.6;
+            font-size: 13px;
+        }
+
+        .monitor-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 13px 20px;
+            background: #121e30;
+            border-top: 1px solid #26364d;
+            color: #91a5c1;
+            font-size: 11px;
+        }
+
+        .monitor-panel:fullscreen {
+            display: flex;
+            flex-direction: column;
+            background: #080f1b;
+        }
+
+        .monitor-panel:fullscreen .monitor-content {
+            flex: 1;
+            overflow: auto;
+        }
+
+        @media (max-width: 850px) {
+
+            .monitor-content .grid.cols3,
+            .monitor-content .grid.cols4 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .monitor-content .grid.cols2,
+            .monitor-content .grid.cols3,
+            .monitor-content .grid.cols4 {
+                grid-template-columns: 1fr;
+            }
+
+            .monitor-toolbar {
+                padding: 14px;
+            }
+
+            .monitor-indicator {
+                display: none;
+            }
+        }
+
+
+
+        /* Individual camera player layout */
+
+        .camera {
+            min-width: 0;
+            overflow: hidden;
+            background: #101b2c;
+            border: 1px solid #293b55;
+            border-radius: 14px;
+        }
+
+        .camera-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #152238;
+        }
+
+        .camera-head strong {
+            min-width: 0;
+            /* overflow: hidden; */
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+        }
+
+        .screen {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: #02050b;
+            /* overflow: hidden; */
+        }
+
+        .player-target {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            /* overflow: hidden; */
+        }
+
+        .player-target video,
+        .player-target canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .camera-foot {
+            padding: 10px 14px;
+            background: #101b2c;
+            color: #91a5c1;
+            font-size: 11px;
+            /* overflow: hidden; */
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .live {
+            font-size: 10px;
+            color: #fbbf24;
+            white-space: nowrap;
+        }
+
+        .live.error {
+            color: #fb7185;
+        }
+
+        .live.error::before {
+            color: #fb7185;
+        }
+
+        .camera-error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 16px;
+            color: #fb7185;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .grid.cols1 {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .grid.cols2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid.cols3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .grid.cols4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        @media (max-width: 900px) {
+
+            .grid.cols3,
+            .grid.cols4 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .grid.cols2,
+            .grid.cols3,
+            .grid.cols4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+
+
+        
+    </style>
+</head>
+
+<body>
+    <div class="shell">
+        <header class="top">
+            <div class="brand">
+                <div class="logo">◉</div>
+                <div><strong>CMSV6 Command Center</strong><span class="muted">Live fleet video monitoring</span></div>
+            </div>
+            <div class="tag" id="accountTag">● Not connected</div>
+        </header>
+        <div class="layout">
+            <aside>
+                <section class="panel">
+                    <h2>Secure access</h2>
+                    <p>Sign in with your CMSV6 account to discover authorized vehicles and cameras.</p>
+                    <form id="loginForm"><label for="account">Account</label><input id="account" autocomplete="username"
+                            placeholder="CMSV6 username" required><label for="password">Password</label><input
+                            id="password" type="password" autocomplete="current-password" placeholder="Enter password"
+                            required><button class="btn full" id="loginBtn">Sign in & load cameras</button></form>
+                    <div class="status" id="status" role="status">Waiting for login</div>
+                    <div class="divider"></div>
+                    <h2>Fleet overview</h2>
+                    <div class="stat">
+                        <div><b id="vehicleCount">0</b><span>Vehicles</span></div>
+                        <div><b id="deviceCount">0</b><span>Devices</span></div>
+                        <div><b id="cameraCount">0</b><span>Cameras</span></div>
+                    </div><label for="streamType">Stream quality</label><select id="streamType">
+                        <option value="1">Sub stream (lower bandwidth)</option>
+                        <option value="0">Main stream</option>
+                    </select><label for="gridSize">Grid layout</label><select id="gridSize">
+                        <option value="2">2 columns</option>
+                        <option value="1">1 column</option>
+                        <option value="3">3 columns</option>
+                        <option value="4">4 columns</option>
+                    </select>
+                    <div class="divider"></div>
+                    <div class="row spread">
+                        <h2>Vehicles</h2><button class="btn secondary small" id="allBtn" disabled>All cameras</button>
+                    </div>
+                    <div id="vehicles" class="vehicle-list"><span class="muted">Sign in to discover vehicles.</span>
+                    </div><button class="btn secondary full" id="logoutBtn" disabled>Disconnect</button>
+                </section>
+            </aside>
+            <main>
+                <div class="head">
+                    <div>
+                        <h1>Live camera wall</h1>
+                        <p id="subtitle">Your authorized video channels appear here after login.</p>
+                    </div>
+                    <div class="row"><button class="btn secondary small" id="refreshBtn" disabled>↻ Refresh
+                            devices</button><button class="btn small" id="playBtn" disabled>▶ Play cameras</button>
+                    </div>
+                </div>
+                <!-- <div id="cameraGrid" class="grid">
+                    <div class="panel" style="grid-column:1/-1;text-align:center;padding:75px 20px">
+                        <div style="font-size:43px;margin-bottom:14px">▣</div>
+                        <h2>Ready to monitor</h2>
+                        <p>Log in to discover and display your cameras automatically.</p>
+                    </div>
+                </div> -->
+
+
+
+                <section class="monitor-panel" id="monitorPanel">
+                    <div class="monitor-toolbar">
+                        <div class="monitor-title">
+                            <div class="monitor-icon">▣</div>
+                            <div>
+                                <h2>Live Surveillance</h2>
+                                <p id="subtitle">Sign in to view your cameras</p>
+                            </div>
+                        </div>
+
+                        <div class="monitor-actions">
+                            <span class="monitor-indicator">
+                                <span class="pulse-dot"></span>
+                                MONITORING
+                            </span>
+                            <button class="monitor-btn" id="fullscreenBtn" type="button">⛶ Fullscreen</button>
+                        </div>
+                    </div>
+
+                    <div class="monitor-content">
+                        <div id="cameraGrid" class="grid cols2">
+                            <div class="monitor-empty">
+                                <div class="empty-icon">▣</div>
+                                <h3>Camera monitoring is ready</h3>
+                                <p>Connect your CMSV6 account to start viewing
+                                    your authorized camera feeds.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="monitor-footer">
+                        <span id="monitorCount">0 camera channels</span>
+                        <span>CMSV6 Live Monitoring</span>
+                    </div>
+                </section>
+
+                <div class="hint">Playback uses your local <b>cmsv6player.min.js</b> and configured CMSV6 media proxy.
+                    The API session is not stored in localStorage. For production, use HTTPS and an authenticated
+                    backend session.</div>
+            </main>
+        </div>
+    </div>
+    <script src="./cmsv6player.min.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>
