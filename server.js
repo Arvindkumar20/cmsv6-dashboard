@@ -1,9 +1,12 @@
 const express = require("express");
 const path = require("path");
 const dotenv = require("dotenv");
+const httpProxyServer = require("./http-proxy").default;
+const startTCPProxy = require("./tcp-proxy").default;
 
 dotenv.config();
-
+httpProxyServer();
+startTCPProxy();
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "16kb" }));
