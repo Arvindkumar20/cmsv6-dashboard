@@ -345,11 +345,11 @@
 
         .screen {
             width: 100%;
-            aspect-ratio:initial;
+            aspect-ratio: initial;
             background: #030812;
             position: relative;
             /* overflow: hidden */
-            
+
         }
 
         .player-target {
@@ -816,11 +816,6 @@
                 grid-template-columns: 1fr;
             }
         }
-
-
-
-
-        
     </style>
 </head>
 
@@ -852,7 +847,8 @@
                     </div><label for="streamType">Stream quality</label><select id="streamType">
                         <option value="1">Sub stream (lower bandwidth)</option>
                         <option value="0">Main stream</option>
-                    </select><label for="gridSize">Grid layout</label><select id="gridSize">
+                    </select>
+                    <label for="gridSize">Grid layout</label><select id="gridSize">
                         <option value="2">2 columns</option>
                         <option value="1">1 column</option>
                         <option value="3">3 columns</option>
@@ -883,9 +879,6 @@
                         <p>Log in to discover and display your cameras automatically.</p>
                     </div>
                 </div> -->
-
-
-
                 <section class="monitor-panel" id="monitorPanel">
                     <div class="monitor-toolbar">
                         <div class="monitor-title">
@@ -901,7 +894,9 @@
                                 <span class="pulse-dot"></span>
                                 MONITORING
                             </span>
-                            <button class="monitor-btn" id="fullscreenBtn" type="button">⛶ Fullscreen</button>
+                            <button class="monitor-btn" id="fullscreenBtn" type="button">Fullscreen</button>
+                            <a href="./playback.html"> <button class="monitor-btn" id="play-back" type="button">⛶
+                                    Play Back</button></a>
                         </div>
                     </div>
 

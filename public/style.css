@@ -1,0 +1,588 @@
+:root {
+    font-family: Inter, system-ui, -apple-system, sans-serif;
+    color: #eaf0ff;
+    background: #080e1a;
+    color-scheme: dark
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 75% -20%, #18325c, transparent 55%), #080e1a
+}
+
+button,
+input,
+select {
+    font: inherit
+}
+
+button {
+    cursor: pointer
+}
+
+button:disabled {
+    opacity: .45;
+    cursor: not-allowed
+}
+
+.shell {
+    max-width: 1600px;
+    margin: auto;
+    padding: 26px
+}
+
+.top,
+.brand,
+.row,
+.head,
+.monitor-toolbar,
+.monitor-title,
+.monitor-actions,
+.camera-head,
+.camera-controls,
+.monitor-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px
+}
+
+.top,
+.head,
+.monitor-toolbar,
+.camera-head,
+.monitor-footer {
+    justify-content: space-between
+}
+
+.top {
+    margin-bottom: 26px
+}
+
+.brand {
+    gap: 13px
+}
+
+.logo,
+.monitor-icon {
+    display: grid;
+    place-items: center;
+    width: 45px;
+    height: 45px;
+    border-radius: 13px;
+    background: #2563eb;
+    font-size: 24px
+}
+
+.brand strong {
+    display: block;
+    font-size: 20px
+}
+
+.muted,
+.head p,
+.monitor-title p {
+    color: #91a0b8;
+    font-size: 13px
+}
+
+.tag {
+    padding: 8px 12px;
+    border: 1px solid #2a3b56;
+    border-radius: 99px;
+    color: #a8bbd6;
+    font-size: 12px
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 22px
+}
+
+.layout>main {
+    min-width: 0
+}
+
+.panel,
+.monitor-panel {
+    border: 1px solid #25344d;
+    border-radius: 18px;
+    background: #111c2f;
+    box-shadow: 0 14px 50px #0002
+}
+
+.panel {
+    padding: 22px
+}
+
+.panel h2 {
+    font-size: 17px;
+    margin: 0 0 7px
+}
+
+.panel p {
+    margin: 0 0 22px;
+    color: #94a5c0;
+    font-size: 13px;
+    line-height: 1.55
+}
+
+label {
+    display: block;
+    font-size: 12px;
+    font-weight: 650;
+    color: #bdcbe0;
+    margin: 15px 0 7px
+}
+
+input,
+select {
+    width: 100%;
+    background: #0b1424;
+    border: 1px solid #30405b;
+    border-radius: 10px;
+    padding: 12px;
+    color: #e9f1ff;
+    outline: none
+}
+
+input:focus,
+select:focus {
+    border-color: #4d8fff;
+    box-shadow: 0 0 0 3px #2563eb26
+}
+
+.btn,
+.monitor-btn,
+.camera-control {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #2563eb;
+    color: white;
+    padding: 12px 16px;
+    font-weight: 700
+}
+
+.btn.secondary,
+.monitor-btn,
+.camera-control {
+    background: #22334e
+}
+
+.btn.full {
+    width: 100%;
+    margin-top: 19px
+}
+
+.btn.small {
+    padding: 9px 13px;
+    font-size: 12px
+}
+
+.row {
+    flex-wrap: wrap;
+    gap: 10px
+}
+
+.spread {
+    justify-content: space-between
+}
+
+.status {
+    font-size: 12px;
+    color: #93a7c5;
+    margin-top: 13px;
+    min-height: 20px;
+    overflow-wrap: anywhere
+}
+
+.status.error {
+    color: #ff8e99
+}
+
+.status.success {
+    color: #61dfad
+}
+
+.divider {
+    height: 1px;
+    background: #283852;
+    margin: 24px 0
+}
+
+.stat {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 18px 0
+}
+
+.stat>div {
+    padding: 13px 8px;
+    border: 1px solid #2c3b56;
+    border-radius: 12px;
+    background: #0b1628;
+    text-align: center
+}
+
+.stat b {
+    display: block;
+    font-size: 23px
+}
+
+.stat span {
+    font-size: 11px;
+    color: #92a3bd
+}
+
+.head {
+    flex-wrap: wrap;
+    margin-bottom: 20px
+}
+
+.head h1 {
+    font-size: 25px;
+    margin: 0 0 5px
+}
+
+.head p {
+    margin: 0
+}
+
+.vehicle-list {
+    max-height: 230px;
+    overflow: auto;
+    display: grid;
+    gap: 7px
+}
+
+.vehicle {
+    padding: 10px 12px;
+    border: 1px solid #293a55;
+    border-radius: 10px;
+    background: #0b1628;
+    color: #d9e5f8;
+    text-align: left
+}
+
+.vehicle.active {
+    border-color: #3b82f6;
+    background: #172c4e
+}
+
+.vehicle small {
+    display: block;
+    color: #90a4c1;
+    margin-top: 3px
+}
+
+.hint {
+    margin-top: 20px;
+    padding: 14px;
+    border: 1px solid #29415e;
+    background: #11243b;
+    border-radius: 12px;
+    color: #adc0da;
+    font-size: 12px;
+    line-height: 1.7
+}
+
+.hidden {
+    display: none !important
+}
+
+.monitor-panel {
+    overflow: hidden;
+    min-width: 0;
+    background: #0b1220
+}
+
+.monitor-toolbar {
+    padding: 18px 22px;
+    background: #121e30;
+    border-bottom: 1px solid #26364d;
+    flex-wrap: wrap
+}
+
+.monitor-title h2 {
+    margin: 0 0 5px;
+    font-size: 17px
+}
+
+.monitor-title p {
+    margin: 0
+}
+
+.monitor-icon {
+    background: #1c365c;
+    color: #75aaff
+}
+
+.monitor-actions {
+    gap: 14px
+}
+
+.monitor-indicator {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #91a5c1
+}
+
+.pulse-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: #7f90a8
+}
+
+.monitor-btn {
+    padding: 10px 14px;
+    font-size: 12px
+}
+
+.monitor-content {
+    padding: 14px;
+    background: #080f1b;
+    min-height: 340px
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start
+}
+
+.grid.cols1 {
+    grid-template-columns: minmax(0, 1fr)
+}
+
+.grid.cols3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr))
+}
+
+.grid.cols4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr))
+}
+
+.camera {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #2b3b52;
+    border-radius: 12px;
+    background: #101b2c
+}
+
+.camera:hover {
+    border-color: #508bdf
+}
+
+.camera-head {
+    min-height: 44px;
+    padding: 11px 13px;
+    background: #152238;
+    border-bottom: 1px solid #283950
+}
+
+.camera-head strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px
+}
+
+.live {
+    font-size: 10px;
+    color: #fbbf24;
+    white-space: nowrap
+}
+
+.live::before {
+    content: 'â— ';
+    color: currentColor
+}
+
+.live.error {
+    color: #fb7185
+}
+
+.screen {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #02050b;
+    overflow: hidden
+}
+
+.player-target {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden
+}
+
+.player-target video,
+.player-target canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain
+}
+
+.camera-controls {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 10px;
+    background: #152238;
+    border-top: 1px solid #283950
+}
+
+.camera-control {
+    font-size: 11px;
+    padding: 7px 9px;
+    border: 1px solid #35506e
+}
+
+.camera-control:hover,
+.monitor-btn:hover {
+    background: #315078
+}
+
+.camera-control:disabled {
+    opacity: .4
+}
+
+.camera-foot {
+    padding: 9px 13px;
+    font-size: 11px;
+    color: #93a8c4;
+    overflow-wrap: anywhere
+}
+
+.monitor-empty {
+    grid-column: 1/-1;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 35px;
+    color: #90a4c0
+}
+
+.empty-icon {
+    font-size: 48px;
+    color: #4c709e
+}
+
+.monitor-empty h3 {
+    color: #e4edfc;
+    margin: 0 0 8px
+}
+
+.monitor-empty p {
+    max-width: 340px;
+    line-height: 1.6;
+    font-size: 13px
+}
+
+.monitor-footer {
+    padding: 13px 20px;
+    background: #121e30;
+    border-top: 1px solid #26364d;
+    color: #91a5c1;
+    font-size: 11px
+}
+
+.camera-error {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    padding: 16px;
+    color: #fb7185;
+    text-align: center;
+    font-size: 12px
+}
+
+.monitor-panel:fullscreen {
+    display: flex;
+    flex-direction: column;
+    background: #080f1b
+}
+
+.monitor-panel:fullscreen .monitor-content {
+    flex: 1;
+    overflow: auto
+}
+
+.camera:fullscreen {
+    display: flex;
+    flex-direction: column;
+    background: #02050b;
+    border-radius: 0
+}
+
+.camera:fullscreen .screen {
+    flex: 1;
+    min-height: 0;
+    aspect-ratio: auto
+}
+
+.camera:fullscreen .player-target {
+    display: grid;
+    place-items: center
+}
+
+@media(max-width:1050px) {
+    .layout {
+        grid-template-columns: 1fr
+    }
+}
+
+@media(max-width:850px) {
+
+    .grid.cols3,
+    .grid.cols4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+    }
+}
+
+@media(max-width:600px) {
+    .shell {
+        padding: 15px
+    }
+
+    .panel {
+        padding: 17px
+    }
+
+    .grid,
+    .grid.cols3,
+    .grid.cols4 {
+        grid-template-columns: 1fr
+    }
+
+    .head h1 {
+        font-size: 20px
+    }
+
+    .monitor-toolbar {
+        padding: 14px
+    }
+
+    .monitor-indicator {
+        display: none
+    }
+}

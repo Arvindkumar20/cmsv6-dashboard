@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Back</title>
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(ellipse at 75% -20%, #18325c, transparent 55%), #080e1a
+        }
+
+        .header {
+            padding: 15px 15px;
+        }
+
+        .filters {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div class="header">
+        <header class="top">
+            <div class="brand">
+                <div class="logo">◉</div>
+                <div><strong>CMSV6 Command Center</strong><span class="muted">Live fleet video monitoring</span></div>
+            </div>
+            <div class="tag" id="accountTag">● Not connected</div>
+        </header>
+    </div>
+    <!-- create filters  -->
+    <!-- jsession,
+   
+  
+    startSecons,
+    endSeconds, -->
+
+    <section class="filters">
+        <div>
+            <label for="devIdn">Device Id No</label>
+            <select id="devIdn">
+                <!-- <option value="2">2 columns</option>
+                <option value="1">1 column</option>
+                <option value="3">3 columns</option>
+                <option value="4">4 columns</option> -->
+            </select>
+        </div>
+        <div>
+            <label for="chanel">Chanel No</label>
+            <select id="chanel">
+                0 means channel 1, 1 means channel 2, -1 means all channel.
+                <option value="-1">All</option>
+                <option value="0">CH1</option>
+                <option value="1">CH2</option>
+                <option value="2">CH3</option>
+                <option value="3">CH4</option>
+            </select>
+        </div>
+        <div>
+            <label for="date">Date</label>
+            <div id="date">
+                <input type="date">
+            </div>
+        </div>
+
+        <div>
+            <label for="recordingType">Recording Type</label>
+            <select id="recordingType">
+                <!-- 0 means General, 1 means alarm, -1 means all. -->
+                <option value="-1">All</option>
+                <option value="0">General</option>
+                <option value="1">Alarm</option>
+
+            </select>
+        </div>
+        <div>
+            <label for="fileAtt">File Attributes</label>
+            <select id="fileAtt">
+                <!-- 1 indicates an image
+                2 means a video. -->
+
+                <option value="1">Image</option>
+                <option value="2">Video</option>
+
+            </select>
+        </div>
+        <div>
+            <label for="startSeconds">Start from (in seconds)</label>
+            <!-- <select id="startSeconds">
+            <option value="2">2 columns</option>
+            <option value="1">1 column</option>
+            <option value="3">3 columns</option>
+            <option value="4">4 columns</option>
+        </select> -->
+            <input type="text" id="startSeconds" placeholder="Start from (in seconds)">
+
+        </div>
+        <div>
+            <label for="endSeconds">end time (in seconds)</label>
+            <!-- <select id="startSeconds">
+            <option value="2">2 columns</option>
+            <option value="1">1 column</option>
+            <option value="3">3 columns</option>
+            <option value="4">4 columns</option>
+        </select> -->
+            <input type="text" id="endSeconds" placeholder="end on (in seconds)">
+
+        </div>
+        <div>
+            <button class="filter-btn" id="search">Search</button>
+        </div>
+
+    </section>
+    <!-- <script src="app.js"></script> -->
+    <script>
+        const devIdn = document.getElementById("devIdn");
+        const date = document.getElementById("date");
+        const recordingType = document.getElementById("recordingType");
+        const fileAtt = document.getElementById("fileAtt");
+        const startSeconds = document.getElementById("startSeconds");
+        const endSeconds = document.getElementById("endSeconds");
+        const search = document.getElementById("search");
+
+        const chanel = document.getElementById("chanel");
+        const apiRequiredData = {
+            jsession: "",
+            didn: "",
+            year: "",
+            chanel: "",
+            month: "",
+            day: "",
+            recordingType: "",
+            fileAtt: "",
+            startSeconds: "",
+            endSeconds: "",
+        }
+        const { jsession } = JSON.parse(localStorage.getItem("jsession"));
+        apiRequiredData.jsession = jsession;
+        async function post(url, body) {
+            const response = await fetch(url, {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                },
+
+                body: JSON.stringify(body),
+            });
+
+            let data;
+
+            try {
+                data = await response.json();
+            } catch {
+                throw new Error(`Invalid API response (HTTP ${response.status})`);
+            }
+
+            if (!response.ok) {
+                console.log(data.error)
+                throw new Error(data.error || data.message || `HTTP ${response.status}`);
+            }
+
+            return data;
+        }
+
+
+        async function loadVehicles() {
+            const data = await post("/api/vehicles", {
+                jsession,
+            });
+
+            if (!Array.isArray(data.vehicles)) {
+                throw new Error("Invalid vehicle list returned by API");
+            }
+
+            vehicles = data.vehicles;
+            console.log(vehicles)
+            fillDeviceIdNoSelectBox(vehicles)
+
+
+        }
+
+        loadVehicles();
+
+
+
+
+
+        function fillDeviceIdNoSelectBox(vehicles) {
+            vehicles.map((v, i) => {
+                // v.devices[0].devIdno
+                devIdn.appendChild(createOption(v.devices[0].devIdno, `${v.devices[0].devIdno}`));
+                // chanel.appendChild(createOption(i, `${v.devices[0].channelNames.split(",")[i]}`));
+
+            })
+        }
+
+
+        function createOption(value, text) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.innerText = text;
+            return option;
+        }
+
+        chanel.addEventListener("change", (e) => {
+            apiRequiredData.chanel = e.target.value;
+
+        });
+        devIdn.addEventListener("change", (e) => {
+            apiRequiredData.didn = e.target.value;
+        });
+        recordingType.addEventListener("change", (e) => {
+            apiRequiredData.recordingType = e.target.value;
+        });
+        date.addEventListener("change", (e) => {
+            const [year, month, day] = e.target.value.split("-");
+            apiRequiredData.year = year;
+            apiRequiredData.month = month;
+            apiRequiredData.day = day;
+
+        });
+        fileAtt.addEventListener("change", (e) => {
+            apiRequiredData.fileAtt = e.target.value;
+        });
+        startSeconds.addEventListener("change", (e) => {
+            apiRequiredData.startSeconds = e.target.value;
+        });
+        endSeconds.addEventListener("change", (e) => {
+            apiRequiredData.endSeconds = e.target.value;
+        });
+
+
+
+
+        async function loadVideos(params) {
+            const result = await post("http://localhost:3001/api/video-list", params);
+            console.log(result);
+            return result;
+        }
+
+        search.addEventListener("click", () => {
+            console.log(apiRequiredData)
+            loadVideos(apiRequiredData);
+        })
+    </script>
+</body>
+
+</html>
