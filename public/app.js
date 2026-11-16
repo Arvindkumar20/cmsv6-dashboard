@@ -459,13 +459,9 @@ function startCamera(camera, index, generation) {
 
     const cameraPlayer = new Cmsv6Player({
       domId: videoTarget.id,
-
       isVodMode: false,
-
       width: videoWidth,
-
       height: videoHeight,
-
       lang: "en",
     });
 

@@ -6,6 +6,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Play Back</title>
     <link rel="stylesheet" href="./style.css">
+    <script>
+        (() => {
+            const original = MediaSource.prototype.addSourceBuffer;
+            let audioBuffer = null;
+            let videoBuffer = null;
+            let corrected = false;
+
+            MediaSource.prototype.addSourceBuffer = function (mime) {
+                const sb = original.call(this, mime);
+
+                if (mime.startsWith("audio/")) {
+                    audioBuffer = sb;
+                }
+
+                if (mime.startsWith("video/")) {
+                    videoBuffer = sb;
+                }
+
+                function synchronize() {
+                    if (corrected || !audioBuffer || !videoBuffer) return;
+                    if (audioBuffer.updating || videoBuffer.updating) return;
+
+                    try {
+                        if (!audioBuffer.buffered.length ||
+                            !videoBuffer.buffered.length) return;
+
+                        const audioStart = audioBuffer.buffered.start(0);
+                        const videoStart = videoBuffer.buffered.start(0);
+
+                        const difference = audioStart - videoStart;
+
+                        if (Math.abs(difference) > 5) {
+                            audioBuffer.timestampOffset = -difference;
+                            corrected = true;
+
+                            console.log(
+                                "[CMS FIX] Audio timestamp offset:",
+                                -difference
+                            );
+                        }
+                    } catch (error) {
+                        console.warn("[CMS FIX]", error.message);
+                    }
+                }
+
+                sb.addEventListener("updateend", synchronize);
+
+                return sb;
+            };
+        })();
+    </script>
     <style>
         body {
             margin: 0;
@@ -55,6 +106,7 @@
         <div>
             <label for="devIdn">Device Id No</label>
             <select id="devIdn">
+                <option value="">select a vehicle</option>
                 <!-- <option value="2">2 columns</option>
                 <option value="1">1 column</option>
                 <option value="3">3 columns</option>
@@ -126,8 +178,16 @@
             <button class="filter-btn" id="search">Search</button>
         </div>
 
+
     </section>
     <!-- <script src="app.js"></script> -->
+    <section id="video-container"></section>
+    <!-- <div id="cmsv6flash"></div>
+        <script src="./cmsv6player.min.js"></script>
+         -->
+    <div id="cmsv6-player" style="width: 800px; height: 450px;"></div>
+
+    <script src="./cmsv6player.min.js"></script>
     <script>
         const devIdn = document.getElementById("devIdn");
         const date = document.getElementById("date");
@@ -136,6 +196,8 @@
         const startSeconds = document.getElementById("startSeconds");
         const endSeconds = document.getElementById("endSeconds");
         const search = document.getElementById("search");
+        const videoContainer = document.getElementById("video-container");
+
 
         const chanel = document.getElementById("chanel");
         const apiRequiredData = {
@@ -173,6 +235,9 @@
 
             if (!response.ok) {
                 console.log(data.error)
+                if (data.error.includes("32")) {
+                    alert("device offline")
+                }
                 throw new Error(data.error || data.message || `HTTP ${response.status}`);
             }
 
@@ -251,14 +316,149 @@
 
         async function loadVideos(params) {
             const result = await post("http://localhost:3001/api/video-list", params);
-            console.log(result);
+            // console.log(result);
             return result;
         }
 
-        search.addEventListener("click", () => {
+        search.addEventListener("click", async () => {
             console.log(apiRequiredData)
-            loadVideos(apiRequiredData);
+            const videos = await loadVideos(apiRequiredData);
+            console.log(videos.videos);
+            createVideoContainer(videos.videos)
         })
+
+
+
+        function createVideoContainer(videos) {
+            videoContainer.innerHTML = videos.map((v, index) => {
+                return `
+            <div>
+                <button onclick="handleClickByIndex(${index})">
+                    Playback
+                </button>
+            </div>
+        `;
+            }).join("");
+
+            window.playbackVideos = videos;
+        }
+
+        // // Start Playback
+        // function startPlayback(url) {
+        //     const player = swfobject.getObjectById("cmsv6flash");
+
+        //     if (!player) {
+        //         console.error("CMSV6 player not found");
+        //         return;
+        //     }
+
+        //     if (!url) {
+        //         console.error("Playback URL is missing");
+        //         return;
+        //     }
+
+        //     // Stop previous playback
+        //     player.stopVideo(0);
+
+        //     // Start new playback
+        //     const ret = player.startVod(0, url);
+
+        //     console.log("Playback started:", url);
+        //     console.log("Player response:", ret);
+        // }
+
+        // // Stop Playback
+        // function stopPlayback() {
+        //     const player = swfobject.getObjectById("cmsv6flash");
+
+        //     if (player) {
+        //         player.stopVideo(0);
+        //     }
+        // }
+
+        // // Handle playback by index
+        // function handleClickByIndex(index) {
+        //     const video = window.playbackVideos?.[index];
+
+        //     if (!video) {
+        //         console.error("Video not found at index:", index);
+        //         return;
+        //     }
+
+        //     handleClick(video.PlaybackUrl);
+        // }
+
+        // // Handle click
+        // function handleClick(url) {
+        //     startPlayback(url);
+        // }
+        //     
+
+        let player = null;
+
+        function initializePlayer() {
+            const container = document.getElementById("cmsv6-player");
+
+            if (!container) {
+                console.error("Player container not found");
+                return;
+            }
+
+            try {
+                player = new Cmsv6Player({
+                    domId: "cmsv6-player",
+                    width: 800,
+                    height: 450,
+                    isVodMode: true,
+                    lang: "en"
+                });
+
+                console.log("CMSV6 player instance:", player);
+            } catch (error) {
+                console.error("Player initialization failed:", error);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", initializePlayer);
+
+
+       function startPlayback(url) {
+    if (!player) {
+        console.error("Player not initialized");
+        return;
+    }
+
+    if (typeof player.startVod !== "function") {
+        console.error("startVod is not available");
+        return;
+    }
+
+    try {
+        if (typeof player.stopVideo === "function") {
+            player.stopVideo(0);
+        }
+
+        const result = player.startVod(0, url);
+
+        console.log("Playback result:", result);
+    } catch (error) {
+        console.error("Playback error:", error);
+    }
+}
+
+        function handleClickByIndex(index) {
+            const video = window.playbackVideos?.[index];
+
+            if (!video?.PlaybackUrlWs) {
+                console.error("Playback URL missing");
+                return;
+            }
+console.log(video.PlaybackUrlWs);
+            startPlayback(video.PlaybackUrlWs);
+        }
+
+
+
     </script>
 </body>
 

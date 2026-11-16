@@ -71,18 +71,23 @@ app.post("/api/vehicles", async (req, res) => {
   if (typeof jsession !== "string" || !/^[a-zA-Z0-9_-]{8,128}$/.test(jsession))
     return res.status(400).json({ error: "Invalid session" });
   try {
-
     const result = await endpoint("StandardApiAction_queryUserVehicle.action", {
       jsession,
     });
+
     if (result.result !== 0)
       return res.status(502).json({
         error: `CMS vehicle query failed (code ${result.result ?? "unknown"})`,
       });
+
+    // result=result.status
+    // console.log(result);
+
     const vehicles = (
       Array.isArray(result.vehicles) ? result.vehicles : []
     ).map((v) => ({
       id: v.id,
+
       name: v.nm || String(v.id),
       devices: (Array.isArray(v.dl) ? v.dl : []).map((d) => ({
         did: d.did,
@@ -91,6 +96,11 @@ app.post("/api/vehicles", async (req, res) => {
         channelNames: d.cn || v.chnName || "",
       })),
     }));
+
+    // http://chinamdvr.com:8088/StandardApiAction_getDeviceOlStatus.action?jsession=cf6b70a3-c82b-4392-8ab6-bbddce336222&devIdno=500000
+    // only online device
+    // const liveDevices = vehicles.filter((v) => );
+
     res.set("Cache-Control", "no-store").json({ vehicles });
   } catch (err) {
     res.status(502).json({ error: err.message });
